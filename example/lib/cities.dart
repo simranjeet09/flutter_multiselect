@@ -1,4 +1,4 @@
-const List<dynamic> cities = [
+const List<Map<String, dynamic>> cities = [
   {"name": "Afghanistan", "code": "AF"},
   {"name": "Åland Islands", "code": "AX"},
   {"name": "Albania", "code": "AL"},

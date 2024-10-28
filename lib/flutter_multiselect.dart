@@ -4,19 +4,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multiselect/selection_modal.dart';
 
-class MultiSelect extends FormField<dynamic> {
+class MultiSelect extends FormField<List<dynamic>> {
   final String titleText;
   final String? hintText;
   final bool required;
   final String? errorText;
-  final dynamic? value;
+  final List<dynamic>? value;
   final bool filterable;
-  final List dataSource;
+  final List<Map<String, dynamic>> dataSource;
   final String textField;
   final String valueField;
-  final Function? change;
-  final Function? open;
-  final Function? close;
+  final ValueChanged<List<dynamic>>? change;
+  final VoidCallback? open;
+  final VoidCallback? close;
   final Widget? leading;
   final Widget? trailing;
   final int? maxLength;
@@ -29,7 +29,8 @@ class MultiSelect extends FormField<dynamic> {
   final IconData? selectIcon;
   final Color? selectIconColor;
   final Color? hintTextColor;
-  // modal overrides
+
+  // Modal overrides
   final Color? buttonBarColor;
   final String? cancelButtonText;
   final IconData? cancelButtonIcon;
@@ -58,10 +59,12 @@ class MultiSelect extends FormField<dynamic> {
   final IconData? searchBoxIcon;
   final String? searchBoxToolTipText;
   final Size? responsiveDialogSize;
+
   MultiSelect({
-    FormFieldSetter<dynamic>? onSaved,
-    FormFieldValidator<dynamic>? validator,
-    dynamic initialValue,
+    Key? key,
+    FormFieldSetter<List<dynamic>>? onSaved,
+    FormFieldValidator<List<dynamic>>? validator,
+    List<dynamic>? initialValue,
     AutovalidateMode autovalidateMode = AutovalidateMode.disabled,
     this.titleText = 'Title',
     this.titleTextColor,
@@ -116,194 +119,191 @@ class MultiSelect extends FormField<dynamic> {
     this.searchBoxToolTipText,
     this.responsiveDialogSize,
   }) : super(
-            onSaved: onSaved,
-            validator: validator,
-            initialValue: initialValue,
-            autovalidateMode: autovalidateMode,
-            builder: (FormFieldState<dynamic> state) {
-              List<Widget> _buildSelectedOptions(dynamic values, state) {
-                List<Widget> selectedOptions = [];
+    key: key,
+    onSaved: onSaved,
+    validator: validator,
+    initialValue: initialValue,
+    autovalidateMode: autovalidateMode,
+    builder: (FormFieldState<List<dynamic>> state) {
+      List<Widget> _buildSelectedOptions(List<dynamic>? values, FormFieldState<List<dynamic>> state) {
+        final selectedOptions = <Widget>[];
 
-                if (values != null) {
-                  values.forEach((item) {
-                    final notFound = Map<String, dynamic>();
-                    var existingItem = dataSource.singleWhere((itm) => itm[valueField] == item, orElse: () => notFound);
-                    if (existingItem != notFound) {
-                      selectedOptions.add(Chip(
-                        label: Text(existingItem[textField], overflow: TextOverflow.ellipsis),
-                      ));
-                    }
-                  });
-                }
+        if (values != null) {
+          for (var item in values) {
+            final notFound = <String, dynamic>{};
+            final existingItem = dataSource.singleWhere(
+                  (itm) => itm[valueField] == item,
+              orElse: () => notFound,
+            );
+            if (existingItem != notFound) {
+              selectedOptions.add(
+                Chip(
+                  label: Text(existingItem[textField], overflow: TextOverflow.ellipsis),
+                ),
+              );
+            }
+          }
+        }
 
-                return selectedOptions;
-              }
+        return selectedOptions;
+      }
 
-              return InkWell(
-                  onTap: () async {
-                    bool isDlg = false;
-                    if (responsiveDialogSize != null) {
-                      var m = MediaQuery.of(state.context);
-                      if (m.size.width - 100 > responsiveDialogSize.width &&
-                          m.size.height - 100 > responsiveDialogSize.height) {
-                        isDlg = true;
-                      }
-                    }
-                    var results = await Navigator.push(
-                        state.context,
-                        _CustomMaterialPageRoute<dynamic>(
-                          isOpaque: false,
-                          builder: (BuildContext context) {
-                            return _wrapAsDialog(
-                              isDlg,
-                              context,
-                              dialogSize: responsiveDialogSize,
-                              child: SelectionModal(
-                                  title: titleText,
-                                  filterable: filterable,
-                                  valueField: valueField,
-                                  textField: textField,
-                                  dataSource: dataSource,
-                                  values: state.value ?? [],
-                                  maxLength: maxLength,
-                                  maxLengthText: maxLengthText,
-                                  buttonBarColor: buttonBarColor,
-                                  cancelButtonText: cancelButtonText,
-                                  cancelButtonIcon: cancelButtonIcon,
-                                  cancelButtonColor: cancelButtonColor,
-                                  cancelButtonTextColor: cancelButtonTextColor,
-                                  saveButtonText: saveButtonText,
-                                  saveButtonIcon: saveButtonIcon,
-                                  saveButtonColor: saveButtonColor,
-                                  saveButtonTextColor: saveButtonTextColor,
-                                  clearButtonText: clearButtonText,
-                                  clearButtonIcon: clearButtonIcon,
-                                  clearButtonColor: clearButtonColor,
-                                  clearButtonTextColor: clearButtonTextColor,
-                                  deleteButtonTooltipText: deleteButtonTooltipText,
-                                  deleteIcon: deleteIcon,
-                                  deleteIconColor: deleteIconColor,
-                                  selectedOptionsBoxColor: selectedOptionsBoxColor,
-                                  selectedOptionsInfoText: selectedOptionsInfoText,
-                                  selectedOptionsInfoTextColor: selectedOptionsInfoTextColor,
-                                  checkedIcon: checkedIcon,
-                                  uncheckedIcon: uncheckedIcon,
-                                  checkBoxColor: checkBoxColor,
-                                  searchBoxColor: searchBoxColor,
-                                  searchBoxHintText: searchBoxHintText,
-                                  searchBoxFillColor: searchBoxFillColor,
-                                  searchBoxIcon: searchBoxIcon,
-                                  searchBoxToolTipText: searchBoxToolTipText),
-                            );
-                          },
-                          fullscreenDialog: !isDlg,
-                        ));
+      return InkWell(
+        onTap: () async {
+          bool isDialog = false;
+          if (responsiveDialogSize != null) {
+            final m = MediaQuery.of(state.context);
+            isDialog = m.size.width - 100 > responsiveDialogSize!.width &&
+                m.size.height - 100 > responsiveDialogSize!.height;
+          }
+          final results = await Navigator.push(
+            state.context,
+            _CustomMaterialPageRoute<List<dynamic>>(
+              isOpaque: false,
+              builder: (BuildContext context) {
+                return _wrapAsDialog(
+                  isDialog,
+                  context,
+                  dialogSize: responsiveDialogSize,
+                  child: SelectionModal(
+                    title: titleText,
+                    filterable: filterable,
+                    valueField: valueField,
+                    textField: textField,
+                    dataSource: dataSource,
+                    values: state.value ?? [],
+                    maxLength: maxLength,
+                    maxLengthText: maxLengthText,
+                    buttonBarColor: buttonBarColor,
+                    cancelButtonText: cancelButtonText,
+                    cancelButtonIcon: cancelButtonIcon,
+                    cancelButtonColor: cancelButtonColor,
+                    cancelButtonTextColor: cancelButtonTextColor,
+                    saveButtonText: saveButtonText,
+                    saveButtonIcon: saveButtonIcon,
+                    saveButtonColor: saveButtonColor,
+                    saveButtonTextColor: saveButtonTextColor,
+                    clearButtonText: clearButtonText,
+                    clearButtonIcon: clearButtonIcon,
+                    clearButtonColor: clearButtonColor,
+                    clearButtonTextColor: clearButtonTextColor,
+                    deleteButtonTooltipText: deleteButtonTooltipText,
+                    deleteIcon: deleteIcon,
+                    deleteIconColor: deleteIconColor,
+                    selectedOptionsBoxColor: selectedOptionsBoxColor,
+                    selectedOptionsInfoText: selectedOptionsInfoText,
+                    selectedOptionsInfoTextColor: selectedOptionsInfoTextColor,
+                    checkedIcon: checkedIcon,
+                    uncheckedIcon: uncheckedIcon,
+                    checkBoxColor: checkBoxColor,
+                    searchBoxColor: searchBoxColor,
+                    searchBoxHintText: searchBoxHintText,
+                    searchBoxFillColor: searchBoxFillColor,
+                    searchBoxIcon: searchBoxIcon,
+                    searchBoxToolTipText: searchBoxToolTipText,
+                  ),
+                );
+              },
+              fullscreenDialog: !isDialog,
+            ),
+          );
 
-                    if (results != null) {
-                      dynamic newValue;
-                      if (results.length > 0) {
-                        newValue = results;
-                      }
-                      state.didChange(newValue);
-                      if (onSaved != null) {
-                        onSaved(newValue);
-                      }
-                      if (change != null) {
-                        change(newValue);
-                      }
-                    }
-                  },
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: inputBoxFillColor,
-                      contentPadding: EdgeInsets.only(left: 10.0, top: 0.0, right: 10.0, bottom: kIsWeb ? 20 : 0),
-                      errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                          borderSide: BorderSide(color: errorBorderColor ?? Colors.red)),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                          borderSide: BorderSide(
-                              color: enabledBorderColor ??
-                                  Theme.of(state.context).inputDecorationTheme.enabledBorder?.borderSide.color ??
-                                  Colors.grey)),
-                      errorText: state.hasError ? state.errorText : null,
-                      errorMaxLines: 50,
-                    ),
-                    isEmpty:
-                        (state.value == null || state.value == '' || (state.value != null && state.value.length == 0)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Expanded(
-                                child: RichText(
-                                  text: TextSpan(
-                                      text: titleText,
-                                      style: TextStyle(
-                                          fontSize: 16.0,
-                                          color: titleTextColor ?? Theme.of(state.context).primaryColor),
-                                      children: [
-                                        TextSpan(
-                                          text: required ? ' *' : '',
-                                          style: TextStyle(color: maxLengthIndicatorColor, fontSize: 16.0),
-                                        ),
-                                        TextSpan(
-                                          text: maxLength != null ? (maxLengthText ?? '(max $maxLength)') : '',
-                                          style: TextStyle(color: maxLengthIndicatorColor, fontSize: 13.0),
-                                        )
-                                      ]),
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.max,
-                                children: <Widget>[
-                                  Icon(
-                                    selectIcon,
-                                    color: selectIconColor ?? Theme.of(state.context).primaryColor,
-                                    size: 30.0,
-                                  )
-                                ],
-                              )
-                            ],
+          if (results != null) {
+            state.didChange(results);
+            onSaved?.call(results);
+            change?.call(results);
+          }
+        },
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: inputBoxFillColor,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(5.0),
+              borderSide: BorderSide(color: errorBorderColor ?? Colors.red),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(5.0),
+              borderSide: BorderSide(
+                color: enabledBorderColor ??
+                    Theme.of(state.context).inputDecorationTheme.enabledBorder?.borderSide.color ??
+                    Colors.grey,
+              ),
+            ),
+            errorText: state.hasError ? state.errorText : null,
+            errorMaxLines: 50,
+          ),
+          isEmpty: state.value == null || state.value!.isEmpty,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          text: titleText,
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            color: titleTextColor ?? Theme.of(state.context).primaryColor,
                           ),
+                          children: [
+                            TextSpan(
+                              text: required ? ' *' : '',
+                              style: TextStyle(color: maxLengthIndicatorColor, fontSize: 16.0),
+                            ),
+                            if (maxLength != null)
+                              TextSpan(
+                                text: ' (${maxLengthText ?? 'max $maxLength'})',
+                                style: TextStyle(color: maxLengthIndicatorColor, fontSize: 13.0),
+                              ),
+                          ],
                         ),
-                        (state.value == null || state.value == '' || (state.value != null && state.value.length == 0))
-                            ? new Container(
-                                margin: EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 6.0),
-                                child: Text(
-                                  hintText ?? '',
-                                  style: TextStyle(
-                                    color: hintTextColor,
-                                  ),
-                                ),
-                              )
-                            : Wrap(
-                                spacing: 8.0, // gap between adjacent chips
-                                runSpacing: 1.0, // gap between lines
-                                children: _buildSelectedOptions(state.value, state),
-                              )
-                      ],
+                      ),
                     ),
-                  ));
-            });
+                    Icon(selectIcon, color: selectIconColor ?? Theme.of(state.context).primaryColor, size: 30.0),
+                  ],
+                ),
+              ),
+              if (state.value == null || state.value!.isEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 10.0, bottom: 6.0),
+                  child: Text(
+                    hintText ?? '',
+                    style: TextStyle(color: hintTextColor),
+                  ),
+                )
+              else
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 1.0,
+                  children: _buildSelectedOptions(state.value, state),
+                ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 
-  static const RoundedRectangleBorder _defaultDialogShape =
-      RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4.0)));
-  static const double _defaultElevation = 24.0;
+  static const RoundedRectangleBorder _defaultDialogShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(4.0)),
+  );
 
-  static Widget _wrapAsDialog(bool isDialog, BuildContext context, {required Widget child, Size? dialogSize}) {
+  static Widget _wrapAsDialog(
+      bool isDialog,
+      BuildContext context, {
+        required Widget child,
+        Size? dialogSize,
+      }) {
     if (!isDialog) return child;
-    final DialogTheme dialogTheme = DialogTheme.of(context);
-    MediaQueryData data = MediaQuery.of(context);
-    // viewInsets.bottom could be few hundreds when on-screen keyboard is opened, so it has to be ignored for dialog.
-    data = data.copyWith(padding: EdgeInsets.all(0), viewPadding: EdgeInsets.all(0), viewInsets: EdgeInsets.all(0));
+    final dialogTheme = DialogTheme.of(context);
+    final data = MediaQuery.of(context).copyWith(padding: EdgeInsets.zero, viewPadding: EdgeInsets.zero);
+
     return Container(
       color: Colors.black26,
       child: Center(
@@ -311,15 +311,15 @@ class MultiSelect extends FormField<dynamic> {
           width: dialogSize?.width ?? 500.0,
           height: dialogSize?.height ?? 700.0,
           decoration: ShapeDecoration(
-            shadows: kElevationToShadow[dialogTheme.elevation ?? _defaultElevation],
-            shape: RoundedRectangleBorder(),
+            shadows: kElevationToShadow[dialogTheme.elevation ?? 24.0],
+            shape: dialogTheme.shape ?? _defaultDialogShape,
           ),
           child: MediaQuery(
             data: data,
-            child: Container(
-                clipBehavior: Clip.hardEdge,
-                decoration: ShapeDecoration(shape: dialogTheme.shape ?? _defaultDialogShape),
-                child: child),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4.0),
+              child: child,
+            ),
           ),
         ),
       ),
@@ -329,17 +329,15 @@ class MultiSelect extends FormField<dynamic> {
 
 class _CustomMaterialPageRoute<T> extends PageRoute<T> with MaterialRouteTransitionMixin<T> {
   final bool isOpaque;
-
-  _CustomMaterialPageRoute(
-      {required this.builder,
-      RouteSettings? settings,
-      this.maintainState = true,
-      bool fullscreenDialog = false,
-      this.isOpaque = true})
-      : super(settings: settings, fullscreenDialog: fullscreenDialog);
-
-  /// Builds the primary contents of the route.
   final WidgetBuilder builder;
+
+  _CustomMaterialPageRoute({
+    required this.builder,
+    RouteSettings? settings,
+    this.maintainState = true,
+    bool fullscreenDialog = false,
+    this.isOpaque = true,
+  }) : super(settings: settings, fullscreenDialog: fullscreenDialog);
 
   @override
   Widget buildContent(BuildContext context) => builder(context);

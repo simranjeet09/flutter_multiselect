@@ -96,8 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ElevatedButton(
                 child: Text('Save'),
                 style: ElevatedButton.styleFrom(
-                  primary: Theme.of(context).colorScheme.primary,
-                  onPrimary: Theme.of(context).colorScheme.onPrimary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary, backgroundColor: Theme.of(context).colorScheme.primary,
                 ),
                 onPressed: () {
                   _onFormSaved();
